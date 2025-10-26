@@ -1,0 +1,93 @@
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Build / Producción
+dist/
+dist-ssr/
+build/
+.next/
+out/
+.nuxt/
+.cache/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*~
+
+# OS Files
+Thumbs.db
+Desktop.ini
+.AppleDouble
+.LSOverride
+
+# Testing
+coverage/
+*.coverage
+.nyc_output/
+.jest/
+
+# Temp files
+*.tmp
+*.temp
+*.local
+.temp/
+tmp/
+
+# Python (si usas scripts auxiliares)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Vercel
+.vercel/
+
+# Turbo
+.turbo/
+
+# Debug files
+debug_*.ts
+debug_*.js
+
+# Lock files opcionales (mantén solo uno según tu gestor)
+# yarn.lock
+# pnpm-lock.yaml
+
+# Archivos de backup
+*.bak
+*.backup
+*.old
