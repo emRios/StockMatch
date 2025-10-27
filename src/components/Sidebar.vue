@@ -9,7 +9,6 @@
         <div class="text-xs uppercase tracking-wider text-neutral-500 mb-3 font-semibold">📊 Reportes</div>
         <ul class="space-y-1">
           <li><RouterLink class="link" to="/reportes/requerimientos">Requerimientos</RouterLink></li>
-          <li><RouterLink class="link" to="/reportes/faltantes-cliente">Faltantes por Cliente</RouterLink></li>
           <li><RouterLink class="link" to="/reportes/faltantes-pedido">Faltantes del pedido</RouterLink></li>
         </ul>
       </div>
@@ -19,12 +18,7 @@
           <li><RouterLink class="link" to="/recepciones">Recepciones</RouterLink></li>
         </ul>
       </div>
-      <div>
-        <div class="text-xs uppercase tracking-wider text-neutral-500 mb-3 font-semibold">🔍 Consultas</div>
-        <ul class="space-y-1">
-          <li><RouterLink class="link" to="/consultas/cliente">Por Cliente</RouterLink></li>
-        </ul>
-      </div>
+      
     </nav>
   </aside>
 </template>

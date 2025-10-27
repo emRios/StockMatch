@@ -24,6 +24,9 @@
         <button class="btn-primary" @click="load">
           🔍 Consultar
         </button>
+        <button class="btn-warning" :disabled="!allRows.length || loading" @click="hacerPedido">
+          {{ loading ? '⏳ Creando...' : '📦 Hacer Pedido' }}
+        </button>
         <button class="btn-success" :disabled="!allRows.length" @click="exportCsv">
           💾 Descargar CSV
         </button>
@@ -51,10 +54,12 @@
 
 <script setup lang="ts">
 import { ref, watchEffect } from "vue";
+import { useRouter } from "vue-router";
 import { supabase } from "@/lib/supabase";
 import DataGrid from "@/components/DataGrid.vue";
 import { downloadCsv } from "@/lib/csv";
 import { loadRequerimientosFromCSV } from "@/lib/csvLoader";
+import { useRecepcionStore } from "@/stores/recepcion";
 
 type Row = {
   corte: string;
@@ -67,6 +72,9 @@ type Row = {
   a_pedir: number;
 };
 
+const router = useRouter();
+const recepcionStore = useRecepcionStore();
+const loading = ref(false);
 const vendor = ref(""); const page = ref(1); const pageSize = ref(50);
 const sortBy = ref<keyof Row>('a_pedir'); const asc = ref(false);
 const status = ref(""); const allRows = ref<Row[]>([]); const rows = ref<Row[]>([]); const total = ref<number>();
@@ -116,6 +124,75 @@ function nextPage(){ if (page.value*pageSize.value < (total.value||0)) { page.va
 function prevPage(){ if (page.value>1) { page.value--; paginate(); } }
 function exportCsv(){ downloadCsv(`requerimientos_${vendor.value||'todos'}`, allRows.value); }
 
+// 🤖 Esta función llama al RPC Supabase: crear_pedido_desde_requerimientos()
+//
+// 📌 El RPC PL/pgSQL:
+// - Ejecuta get_requerimientos_proveedor()
+// - Inserta una única orden en pedidos_curso
+// - Inserta los productos correspondientes en pedido_base
+// - Devuelve un único valor tipo text: el orden_id generado (ej: "OC-20251026-143012")
+//
+// ✅ Esta función:
+// - Ejecuta supabase.rpc("") sin argumentos
+// - Muestra el orden_id creado o un mensaje de error
+// - Guarda el orden_id en recepcionStore
+// - Redirige a /recepciones/wizard
+
+async function hacerPedido() {
+  const confirmar = confirm(
+    '¿Crear pedido automáticamente desde requerimientos?\n\n' +
+    'Se generará un pedido con todos los productos que tienen cantidad a pedir > 0.\n\n' +
+    '¿Continuar?'
+  );
+  
+  if (!confirmar) return;
+
+  try {
+    loading.value = true;
+    status.value = "Creando pedido...";
+
+  // Llamar al RPC especificando el parámetro para evitar sobrecarga ambigua
+  // En la BD existen: crear_pedido_desde_requerimientos() y crear_pedido_desde_requerimientos(p_refresh_mv boolean)
+  // Pasamos p_refresh_mv para desambiguar la llamada vía PostgREST.
+  const { data, error } = await supabase.rpc("crear_pedido_desde_requerimientos", { p_refresh_mv: true });
+
+    if (error) {
+      console.error("Error al crear pedido:", error);
+      status.value = `❌ Error: ${error.message}`;
+      alert(`❌ No se pudo crear el pedido:\n\n${error.message}`);
+      return;
+    }
+
+    // data contiene el orden_id como string
+    const ordenId = data;
+
+    if (!ordenId) {
+      status.value = "⚠️ No se generó ningún pedido (sin productos con a_pedir > 0)";
+      alert("⚠️ No se generó ningún pedido.\n\nVerifica que haya productos con cantidad a pedir > 0.");
+      return;
+    }
+
+    status.value = `✅ Pedido creado: ${ordenId}`;
+    
+    alert(
+      `✅ Pedido creado exitosamente:\n\n` +
+      `📋 Orden ID: ${ordenId}\n\n` +
+      `Ahora serás redirigido al Wizard para comenzar la recepción.`
+    );
+
+    // Guardar orden_id en el store y redirigir
+    recepcionStore.setOrdenId(ordenId);
+    router.push("/recepciones/wizard");
+    
+  } catch (e: any) {
+    console.error("Error inesperado:", e);
+    status.value = `❌ Error: ${e.message}`;
+    alert(`❌ Error inesperado al crear el pedido:\n\n${e.message}`);
+  } finally {
+    loading.value = false;
+  }
+}
+
 load(); watchEffect(()=>{ paginate(); });
 </script>
 
@@ -128,6 +205,11 @@ load(); watchEffect(()=>{ paginate(); });
 .btn-primary { 
   @apply px-6 py-2.5 rounded-lg font-medium transition-all;
   @apply bg-blue-600 text-white hover:bg-blue-700 active:scale-95;
+  @apply shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-warning { 
+  @apply px-6 py-2.5 rounded-lg font-medium transition-all;
+  @apply bg-amber-600 text-white hover:bg-amber-700 active:scale-95;
   @apply shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed;
 }
 .btn-success { 
